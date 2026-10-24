@@ -64,7 +64,7 @@ td:first-child, th:first-child{text-align:left}
 <li><b>Đội 1 / Đội 2</b> — chỉ nhập liệu và xem số đội mình, không thấy Lương.</li>
 </ul>
 <div class="field"><label>Tên đăng nhập</label><input id="lgUser" placeholder="vd: admin, doi1, doi2"></div>
-<div class="field" style="margin-top:8px"><label>Mật khẩu</label><input id="lgPass" type="password"></div>
+<!-- TEST MODE (Hằng dặn 24/10): bỏ mật khẩu khi test — ô mật khẩu ẩn, đăng nhập chỉ cần tên. -->
 <button class="btn-green" style="width:100%;padding:14px;margin-top:12px" onclick="loginLive()">Đăng nhập</button>
 <div id="lgErr" style="margin-top:10px"></div>
 <div id="liveNote" class="warn" style="margin-top:10px"></div>
@@ -86,15 +86,7 @@ td:first-child, th:first-child{text-align:left}
 <main>
 <div class="card" id="userBar">
 <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b id="userInfo"></b><button class="btn-white" onclick="logout()">Đăng xuất</button></div>
-<div style="margin-top:10px"><b>Đổi mật khẩu</b>
-<div class="grid3" style="margin-top:6px">
-<div class="field"><label>Mật khẩu cũ</label><input id="mkCu" type="password"></div>
-<div class="field"><label>Mật khẩu mới (≥6 ký tự)</label><input id="mkMoi" type="password"></div>
-<div class="field"><label>Nhập lại</label><input id="mkMoi2" type="password"></div>
-</div>
-<button class="btn-white" style="margin-top:8px;font-weight:bold" onclick="doiMK()">Đổi mật khẩu</button>
-<div id="mkMsg" style="margin-top:8px"></div>
-</div>
+<!-- TEST MODE (Hằng dặn 24/10): đã bỏ mục Đổi mật khẩu khi test. -->
 </div>
 
 <div id="view-tongquan">
@@ -225,17 +217,16 @@ try{SESSION=JSON.parse(sessionStorage.getItem('cpr-session')||'null')}catch(e){S
 function fmt(n){return Number(n||0).toLocaleString('vi-VN')}
 function saveSession(){try{sessionStorage.setItem('cpr-session',JSON.stringify(SESSION))}catch(e){}}
 async function loginLive(){
-  const u=document.getElementById('lgUser').value.trim(), p=document.getElementById('lgPass').value;
+  const u=document.getElementById('lgUser').value.trim();
   const err=document.getElementById('lgErr');
   if(!API_URL){err.innerHTML='<div class="warn">App chưa nối Live: cần deploy Apps Script bằng tài khoản hanglex9x@gmail.com, lấy link /exec dán vào API_URL rồi mới đăng nhập được.</div>';return}
-  if(!u||!p){err.innerHTML='<div class="warn">Nhập đủ tên đăng nhập và mật khẩu.</div>';return}
+  if(!u){err.innerHTML='<div class="warn">Nhập tên đăng nhập.</div>';return}
   try{
-    const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'login',tenDangNhap:u,matKhau:p})});
+    const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'login',tenDangNhap:u,matKhau:''})});
     const j=await res.json();
     if(!j.ok){err.innerHTML='<div class="warn">'+(j.error||'Đăng nhập thất bại.')+'</div>';return}
     SESSION={ten:j.tenDangNhap,vaiTro:j.vaiTro,doi:j.doi||'',token:j.token};
     saveSession();
-    if(j.canDoiMatKhau){alert('Tài khoản này cần đổi mật khẩu sau lần đăng nhập đầu. Vào mục Đổi mật khẩu ở trên.')}
     applyRole();
   }catch(e){err.innerHTML='<div class="warn">Không gọi được Apps Script. Kiểm tra link /exec.</div>'}
 }
