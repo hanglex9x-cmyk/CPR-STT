@@ -69,24 +69,34 @@ function doGet(e) {
       }) });
     }
     if (a === "getChamCong") {
+      var u1 = auth_(e.parameter.token);
+      if (!u1) return out_({ ok: false, error: "Chua dang nhap." });
+      var doi1 = u1.vaiTro === "DOI" ? u1.doi : e.parameter.doi;
       var cc = rows_("ChamCongNgay").filter(function (r) {
         return String(r.ngay) === String(e.parameter.ngay) &&
-          (!e.parameter.doi || String(r.doi) === e.parameter.doi) &&
+          (!doi1 || String(r.doi) === doi1) &&
           (!e.parameter.nhom || String(r.nhom) === e.parameter.nhom);
       });
       return out_({ ok: true, data: cc });
     }
     if (a === "getBaoCaoThang") {
       // thang = "2026-10", doi = "Đội 1" (trống = toàn công ty)
+      var u2 = auth_(e.parameter.token);
+      if (!u2) return out_({ ok: false, error: "Chua dang nhap." });
+      var doi2 = u2.vaiTro === "DOI" ? u2.doi : e.parameter.doi;
       var thang = String(e.parameter.thang || "");
       var list = rows_("BaoCaoNgayNhom").filter(function (r) {
         var d = String(r.ngay); // Sheets có thể trả Date hoặc chuỗi; chuẩn hóa yyyy-mm
         var ym = d.slice(0, 7);
-        // Nếu là Date object dạng "Wed Oct 01..." thì bỏ qua lọc tháng ở đây, front-end lọc tiếp
         return (!thang || ym === thang || d.indexOf(thang) >= 0) &&
-          (!e.parameter.doi || String(r.doi) === e.parameter.doi);
+          (!doi2 || String(r.doi) === doi2);
       });
       return out_({ ok: true, data: list });
+    }
+    if (a === "getUsers") {
+      var u3 = auth_(e.parameter.token);
+      if (!u3) return out_({ ok: false, error: "Chua dang nhap." });
+      return out_(getUsers_(u3));
     }
     return out_({ ok: false, error: "action khong ho tro: " + a });
   } catch (err) {
@@ -100,6 +110,21 @@ function doPost(e) {
     lock.waitLock(10000);
     var body = JSON.parse(e.postData.contents);
     var a = body.action;
+    if (a === "login") return out_(login_(body));
+    if (a === "logout") return out_(logout_(body));
+    if (a === "changePassword" || a === "resetPassword") {
+      var uu = auth_(body.token);
+      if (!uu) return out_({ ok: false, error: "Chua dang nhap." });
+      return out_(a === "changePassword" ? changePassword_(body, uu) : resetPassword_(body, uu));
+    }
+    // Các action ghi dữ liệu đều cần token; Đội chỉ được ghi đội của mình; chốt tháng chỉ Admin.
+    if (a === "saveChamCong" || a === "savePhieuCao" || a === "saveTrangBi" || a === "saveBaoCaoNhom" || a === "chotThang") {
+      var user = auth_(body.token);
+      if (!user) return out_({ ok: false, error: "Chua dang nhap." });
+      if (a === "chotThang" && user.vaiTro !== "ADMIN") return out_({ ok: false, error: "Chi Admin moi duoc chot thang." });
+      if (!canDoi_(user, body.doi)) return out_({ ok: false, error: "Tai khoan nay chi duoc nhap lieu doi cua minh." });
+      body.nguoiCham = body.nguoiCham || user.tenDangNhap;
+    }
     if (a === "saveChamCong") return out_(saveChamCong_(body));
     if (a === "savePhieuCao") return out_(savePhieuCao_(body));
     if (a === "saveTrangBi") return out_(saveTrangBi_(body));
@@ -214,4 +239,91 @@ function chotThang_(body) {
   // (chặn cứng ở bản đầy đủ: kiểm tra ChotSo trước mỗi save; bản này ghi nhận chốt trước).
   sheet_("ChotSo").appendRow([body.thang, body.doi || "TOAN_CONG_TY", body.nguoiChot || "", new Date(), body.ghiChu || ""]);
   return { ok: true };
+}
+
+// ===== PHÂN QUYỀN 3 TÀI KHOẢN (v2, 24/10/2026) =====
+// Vai trò: ADMIN (toàn quyền, xem tổng quan/báo cáo, chốt tháng, quản lý tài khoản),
+// DOI (chỉ nhập liệu và xem đội của mình).
+// Mật khẩu KHÔNG lưu dạng text: chỉ lưu SHA-256 trong tab NguoiDung.
+// Phiên đăng nhập: token UUID lưu tab PhienDangNhap, hết hạn sau 7 ngày.
+// Chế độ Demo (chưa có API_URL) không gọi các hàm này; front-end cho chọn vai trò demo.
+
+function sha256_(s) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8);
+  return bytes.map(function (b) { var v = (b < 0 ? b + 256 : b).toString(16); return v.length === 1 ? "0" + v : v; }).join("");
+}
+function findUser_(ten) {
+  return rows_("NguoiDung").filter(function (r) { return String(r.tenDangNhap) === String(ten); })[0] || null;
+}
+function auth_(token) {
+  if (!token) return null;
+  var sessions = rows_("PhienDangNhap");
+  var now = new Date().getTime();
+  for (var i = 0; i < sessions.length; i++) {
+    if (String(sessions[i].token) === String(token)) {
+      var hetHan = sessions[i].hetHan ? new Date(sessions[i].hetHan).getTime() : 0;
+      if (hetHan && hetHan < now) return null;
+      return { tenDangNhap: sessions[i].tenDangNhap, vaiTro: sessions[i].vaiTro, doi: sessions[i].doi };
+    }
+  }
+  return null;
+}
+function canDoi_(user, doi) {
+  if (!user) return false;
+  if (user.vaiTro === "ADMIN") return true;
+  return String(user.doi) === String(doi);
+}
+function login_(body) {
+  var u = findUser_(body.tenDangNhap);
+  if (!u || String(u.dangHoatDong).toUpperCase() !== "TRUE") return { ok: false, error: "Tai khoan khong ton tai hoac da khoa." };
+  if (sha256_(body.matKhau || "") !== String(u.matKhauHash)) return { ok: false, error: "Sai mat khau." };
+  var token = Utilities.getUuid();
+  var hetHan = new Date(new Date().getTime() + 7 * 24 * 3600 * 1000);
+  sheet_("PhienDangNhap").appendRow([token, u.tenDangNhap, u.vaiTro, u.doi || "", hetHan, new Date()]);
+  return { ok: true, token: token, tenDangNhap: u.tenDangNhap, vaiTro: u.vaiTro, doi: u.doi || "", canDoiMatKhau: String(u.canDoiMatKhau).toUpperCase() === "TRUE" };
+}
+function logout_(body) {
+  var sh = sheet_("PhienDangNhap");
+  var v = sh.getDataRange().getValues();
+  for (var r = v.length - 1; r >= 1; r--) {
+    if (String(v[r][0]) === String(body.token)) sh.deleteRow(r + 1);
+  }
+  return { ok: true };
+}
+function changePassword_(body, user) {
+  var u = findUser_(user.tenDangNhap);
+  if (!u) return { ok: false, error: "Khong tim thay tai khoan." };
+  if (sha256_(body.matKhauCu || "") !== String(u.matKhauHash)) return { ok: false, error: "Mat khau cu khong dung." };
+  if (!body.matKhauMoi || String(body.matKhauMoi).length < 6) return { ok: false, error: "Mat khau moi toi thieu 6 ky tu." };
+  var sh = sheet_("NguoiDung");
+  var v = sh.getDataRange().getValues();
+  for (var r = 1; r < v.length; r++) {
+    if (String(v[r][0]) === String(user.tenDangNhap)) {
+      sh.getRange(r + 1, 5).setValue(sha256_(body.matKhauMoi));
+      sh.getRange(r + 1, 7).setValue("FALSE");
+      break;
+    }
+  }
+  return { ok: true };
+}
+function resetPassword_(body, user) {
+  if (user.vaiTro !== "ADMIN") return { ok: false, error: "Chi Admin moi duoc dat lai mat khau." };
+  if (!body.matKhauMoi || String(body.matKhauMoi).length < 6) return { ok: false, error: "Mat khau moi toi thieu 6 ky tu." };
+  var sh = sheet_("NguoiDung");
+  var v = sh.getDataRange().getValues();
+  for (var r = 1; r < v.length; r++) {
+    if (String(v[r][0]) === String(body.tenDangNhap)) {
+      sh.getRange(r + 1, 5).setValue(sha256_(body.matKhauMoi));
+      sh.getRange(r + 1, 7).setValue("TRUE");
+      return { ok: true };
+    }
+  }
+  return { ok: false, error: "Khong tim thay tai khoan." };
+}
+function getUsers_(user) {
+  if (user.vaiTro !== "ADMIN") return { ok: false, error: "Chi Admin moi duoc xem danh sach tai khoan." };
+  var list = rows_("NguoiDung").map(function (r) {
+    return { tenDangNhap: r.tenDangNhap, vaiTro: r.vaiTro, doi: r.doi, hoTen: r.hoTen, dangHoatDong: r.dangHoatDong, canDoiMatKhau: r.canDoiMatKhau };
+  });
+  return { ok: true, data: list };
 }
