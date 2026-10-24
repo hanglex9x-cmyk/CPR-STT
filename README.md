@@ -46,3 +46,10 @@ Danh sách công nhân thật, đơn giá cạo/trang bị, sản lượng mủ 
 bộ máy thật, và 7 câu hỏi ở tài liệu thiết kế trước (Đội 2 Nhóm 7 = 114 người?, Đội 1 Nhóm 4
 từ 09/10, ngày 24/10 nghỉ?, lương tính Thường hay tổng 3 loại?, trang bị/thuê 0 là thật hay
 chưa nhập?, lý do vắng, quy tắc phiên).
+
+## Web app 3 tài khoản (v2, 24/10/2026)
+- **Admin**: toàn quyền — xem tổng quan/báo cáo toàn công ty, xem tất cả các module, chốt tháng, quản lý tài khoản (đặt lại mật khẩu cho Đội).
+- **Đội 1 / Đội 2**: chỉ nhập liệu và xem số của đội mình. Không thấy số đội còn lại, không thấy Module 5 (Lương).
+- Đăng nhập: chế độ Demo (chưa có /exec) cho chọn vai trò demo, không cần mật khẩu. Chế độ Live bắt buộc đăng nhập bằng tài khoản trong tab `NguoiDung` của Sheet hệ thống; mật khẩu chỉ lưu dạng SHA-256, không có trong repo.
+- Backend kiểm tra token phiên (tab `PhienDangNhap`, hết hạn 7 ngày) ở mọi action ghi dữ liệu; Đội ghi sai đội sẽ bị từ chối, chốt tháng chỉ Admin mới được.
+- Tài khoản khởi tạo và mật khẩu tạm do người quản trị Sheet cấp riêng cho từng người, mỗi người tự đổi mật khẩu trong app sau lần đăng nhập đầu.
