@@ -263,7 +263,7 @@ function showView(v){
 function applyRole(){
   const login=document.getElementById('loginScreen'), app=document.getElementById('appScreen');
   if(!API_URL){
-    document.getElementById('liveNote').innerHTML='App đang chờ nối Live: cần deploy Apps Script bằng tài khoản <b>hangle90x1</b> (không dùng tài khoản khác), lấy link /exec dán vào biến API_URL trong file này rồi push lại. Khi đó màn hình này mới cho đăng nhập thật, không có nút demo.';
+    document.getElementById('liveNote').innerHTML='App đang chờ nối Live: cần deploy Apps Script bằng tài khoản <b>hanglex9x@gmail.com</b>, lấy link /exec dán vào biến API_URL trong file này rồi push lại. Khi đó màn hình này mới cho đăng nhập thật, không có nút demo.';
   } else {
     document.getElementById('liveNote').innerHTML='Chế độ Live (Google Sheets) — đăng nhập bằng tài khoản Admin / Đội 1 / Đội 2.';
   }
@@ -319,7 +319,7 @@ function them(){
 }
 async function luu(){
   const payload={action:'saveChamCong',ngay:document.getElementById('ngay').value,doi:doiSel.value,nhom:nhomSel.value,workers:workers.map(w=>({maThe:w.ma,trangThai:w.tt,ghiChu:w.gc})),token:(SESSION&&SESSION.token)||undefined};
-  if(!API_URL){document.getElementById('msg').innerHTML='<div class="warn">Chưa nối Live nên chưa lưu được lên Sheets. Cần link /exec (deploy bằng hangle90x1).</div>';return}
+  if(!API_URL){document.getElementById('msg').innerHTML='<div class="warn">Chưa nối Live nên chưa lưu được lên Sheets. Cần link /exec (deploy bằng hanglex9x@gmail.com).</div>';return}
   try{
     const res=await fetch(API_URL,{method:'POST',body:JSON.stringify(payload)});
     const j=await res.json();
