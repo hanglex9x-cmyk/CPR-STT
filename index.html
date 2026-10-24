@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Demo Module 1 — Chấm công cao su CPR-STT</title>
+<title>CPR-STT — Chấm công cao su</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#F5F7FA;color:#222}
@@ -35,10 +35,51 @@ small{color:#555}
 </head>
 <body>
 <header>
-<h1>🌿 Demo Module 1 — Chấm công cao su CPR-STT</h1>
+<h1>🌿 CPR-STT — Chấm công cao su</h1>
 <p>Mobile-first • Xanh cao su #166534 • Nền #F5F7FA • Mọi dòng đều là khung trắng bo 12px viền #D1D5DB</p>
 </header>
 <main>
+<div class="card" id="loginBox">
+<h2 style="margin-top:0">Đăng nhập CPR-STT</h2>
+<p>3 tài khoản: <b>Admin</b> (toàn quyền, xem tổng quan/báo cáo) — <b>Đội 1</b>, <b>Đội 2</b> (chỉ nhập liệu đội mình).</p>
+<div id="loginDemo">
+<p><small>Chế độ Demo (chưa dán link /exec): bấm 1 vai trò để xem thử, không cần mật khẩu. Khi chạy Live, bắt buộc đăng nhập bằng tài khoản thật.</small></p>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="btn-green" onclick="loginDemo('ADMIN','')">Vào vai Admin (demo)</button>
+<button class="btn-green" onclick="loginDemo('DOI','Đội 1')">Vào vai Đội 1 (demo)</button>
+<button class="btn-green" onclick="loginDemo('DOI','Đội 2')">Vào vai Đội 2 (demo)</button>
+</div>
+</div>
+<div id="loginLive" style="display:none">
+<div class="field"><label>Tên đăng nhập</label><input id="lgUser" placeholder="vd: admin, doi1, doi2"></div>
+<div class="field" style="margin-top:8px"><label>Mật khẩu</label><input id="lgPass" type="password"></div>
+<button class="btn-green" style="width:100%;padding:14px;margin-top:10px" onclick="loginLive()">Đăng nhập</button>
+<div id="lgErr" style="margin-top:8px"></div>
+</div>
+</div>
+<div class="card" id="userBar" style="display:none">
+<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b id="userInfo"></b><button class="btn-white" onclick="logout()">Đăng xuất</button></div>
+<div style="margin-top:10px"><b>Đổi mật khẩu</b>
+<div class="grid3" style="margin-top:6px">
+<div class="field"><label>Mật khẩu cũ</label><input id="mkCu" type="password"></div>
+<div class="field"><label>Mật khẩu mới (≥6 ký tự)</label><input id="mkMoi" type="password"></div>
+<div class="field"><label>Nhập lại mật khẩu mới</label><input id="mkMoi2" type="password"></div>
+</div>
+<button class="btn-white" style="margin-top:8px;font-weight:bold" onclick="doiMK()">Đổi mật khẩu</button>
+<div id="mkMsg" style="margin-top:8px"></div>
+</div>
+</div>
+<div class="card" id="adminBox" style="display:none">
+<h2 style="margin-top:0" id="adminTitle">Tổng quan &amp; Báo cáo</h2>
+<div class="grid3">
+<div class="field"><label>Tháng</label><select id="bcThang">
+<option value="2026-01">Tháng 1/2026</option><option value="2026-02">Tháng 2/2026</option><option value="2026-03">Tháng 3/2026</option><option value="2026-04">Tháng 4/2026</option><option value="2026-05">Tháng 5/2026</option><option value="2026-06">Tháng 6/2026</option><option value="2026-07">Tháng 7/2026</option><option value="2026-08">Tháng 8/2026</option><option value="2026-09">Tháng 9/2026</option><option value="2026-10" selected>Tháng 10/2026</option>
+</select></div>
+<div class="field"><label>&nbsp;</label><button class="btn-green" onclick="renderAdmin()">Xem báo cáo</button></div>
+</div>
+<div id="bcOut" style="margin-top:10px;overflow-x:auto"></div>
+<p><small>Admin thấy toàn công ty. Đội 1/Đội 2 chỉ thấy số đội mình, không thấy đội còn lại và không thấy Module 5 (Lương). Số dưới đây là số thật từ Sheet cũ (T1–T10); tháng 3–4 cạo ít vì cây nghỉ cạo, công đi làm chủ yếu là trang bị.</small></p>
+</div>
 <div class="card" id="modeBox"><b>Chế độ: Demo</b> — chưa dán link Apps Script (/exec) nên app chạy bằng số thật 10/2026 trên máy này.
 Để chạy live trên Google Sheets: dán link /exec vào biến <code>API_URL</code> ở đầu thẻ &lt;script&gt; trong file này, rồi push lên GitHub và bật Pages.</div>
 <div class="card tabs">
@@ -166,7 +207,7 @@ function xoa(id){workers=workers.filter(w=>w.id!==id);render()}
 function bulk(t){workers.forEach(w=>w.tt=t);render()}
 function them(){workers.push({id:Date.now(),ma:'TAM-'+String(workers.length+1).padStart(3,'0'),ten:'Công nhân mới (nhập tên thật)',tt:'CO_MAT',gc:''});render()}
 async function luu(){
-  const payload={action:'saveChamCong',ngay:document.getElementById('ngay').value,doi:doiSel.value,nhom:nhomSel.value,workers:workers.map(w=>({maThe:w.ma,trangThai:w.tt,ghiChu:w.gc}))};
+  const payload={action:'saveChamCong',ngay:document.getElementById('ngay').value,doi:doiSel.value,nhom:nhomSel.value,workers:workers.map(w=>({maThe:w.ma,trangThai:w.tt,ghiChu:w.gc})),token:(SESSION&&SESSION.token)||undefined};
   if(API_URL){
     try{
       const res=await fetch(API_URL,{method:'POST',body:JSON.stringify(payload)});
@@ -181,7 +222,7 @@ async function luu(){
   }
   try{localStorage.setItem('demo-m1:'+document.getElementById('ngay').value+'|'+doiSel.value+'|'+nhomSel.value, JSON.stringify(workers))}catch(e){}
 }
-function tab(m){
+function tab(m){if(SESSION&&SESSION.vaiTro==='DOI'&&m==='m5'){alert('Tài khoản Đội chỉ nhập liệu, không xem Lương.');return;}
   ['m1','m2','m3','m4','m5'].forEach(x=>document.getElementById(x).style.display=x===m?'block':'none');
   ['t1','t2','t3','t4','t5'].forEach((id,i)=>document.getElementById(id).classList.toggle('on', ('m'+(i+1))===m));
 }
@@ -205,6 +246,87 @@ function luong(){
 document.getElementById('ngay').addEventListener('change',load);
 if(API_URL){document.getElementById('modeBox').innerHTML='<b>Chế độ: Live (Google Sheets)</b> — app đang gọi Apps Script ở link /exec đã dán.'}
 doiNhom(); renderPhan(); luong();
+
+// ===== PHÂN QUYỀN 3 TÀI KHOẢN (v2) =====
+const MONTHLY = {"2026-01": {"Đội 1": [7853, 0, 332, 7853, 583, 8436, 895, 27, 57], "Đội 2": [6795, 0, 2177, 6795, 437, 7232, 5853, 62, 29]}, "2026-02": {"Đội 1": [5298, 0, 193, 5298, 713, 6011, 3229, 13, 27], "Đội 2": [4927, 0, 855, 4927, 690, 5617, 2083, 13, 35]}, "2026-03": {"Đội 1": [285, 0, 0, 3308, 0, 3308, 6178, 477, 516], "Đội 2": [348, 0, 0, 2312, 0, 2312, 9872, 241, 352]}, "2026-04": {"Đội 1": [366, 0, 0, 2982, 317, 3299, 5804, 492, 386], "Đội 2": [1511, 0, 0, 3502, 74, 3576, 8184, 285, 174]}, "2026-05": {"Đội 1": [5261, 0, 0, 5892, 874, 6766, 2069, 139, 65], "Đội 2": [6792, 0, 0, 7474, 691, 8165, 1228, 70, 38]}, "2026-06": {"Đội 1": [7904, 530, 1, 7995, 643, 8638, 962, 96, 83], "Đội 2": [7866, 0, 0, 7954, 290, 8244, 846, 54, 37]}, "2026-07": {"Đội 1": [8531, 520, 0, 8538, 785, 9323, 597, 85, 68], "Đội 2": [8213, 202, 0, 8248, 504, 8752, 641, 39, 33]}, "2026-08": {"Đội 1": [8392, 548, 0, 8392, 612, 9004, 916, 73, 78], "Đội 2": [9197, 516, 0, 9205, 334, 9539, 216, 34, 25]}, "2026-09": {"Đội 1": [7789, 0, 24, 7789, 697, 8486, 1114, 70, 83], "Đội 2": [9721, 0, 0, 9721, 239, 9960, 270, 46, 47]}, "2026-10": {"Đội 1": [4956, 467, 127, 4956, 964, 5920, 1760, 59, 89], "Đội 2": [5829, 377, 0, 5829, 1482, 7311, 873, 37, 44]}};
+let SESSION=null;
+try{SESSION=JSON.parse(sessionStorage.getItem('cpr-session')||'null')}catch(e){SESSION=null}
+function saveSession(){try{sessionStorage.setItem('cpr-session',JSON.stringify(SESSION))}catch(e){}}
+function loginDemo(vaiTro,doi){
+  SESSION={ten:vaiTro==='ADMIN'?'admin':(doi==='Đội 1'?'doi1':'doi2'),vaiTro:vaiTro,doi:doi||'',demo:true,token:null};
+  saveSession(); applyRole();
+}
+async function loginLive(){
+  const u=document.getElementById('lgUser').value.trim(), p=document.getElementById('lgPass').value;
+  const err=document.getElementById('lgErr');
+  if(!u||!p){err.innerHTML='<div class="warn">Nhập đủ tên đăng nhập và mật khẩu.</div>';return}
+  try{
+    const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'login',tenDangNhap:u,matKhau:p})});
+    const j=await res.json();
+    if(!j.ok){err.innerHTML='<div class="warn">'+(j.error||'Đăng nhập thất bại.')+'</div>';return}
+    SESSION={ten:j.tenDangNhap,vaiTro:j.vaiTro,doi:j.doi||'',demo:false,token:j.token};
+    saveSession();
+    if(j.canDoiMatKhau){alert('Tài khoản này cần đổi mật khẩu sau lần đăng nhập đầu. Vào mục Đổi mật khẩu ở trên.')}
+    applyRole();
+  }catch(e){err.innerHTML='<div class="warn">Không gọi được Apps Script. Kiểm tra link /exec.</div>'}
+}
+async function logout(){
+  if(SESSION&&SESSION.token&&API_URL){try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'logout',token:SESSION.token})})}catch(e){}}
+  SESSION=null; try{sessionStorage.removeItem('cpr-session')}catch(e){} applyRole();
+}
+async function doiMK(){
+  const cu=document.getElementById('mkCu').value, moi=document.getElementById('mkMoi').value, moi2=document.getElementById('mkMoi2').value;
+  const msg=document.getElementById('mkMsg');
+  if(moi!==moi2){msg.innerHTML='<div class="warn">Mật khẩu mới nhập lại chưa khớp.</div>';return}
+  if(!SESSION||SESSION.demo){msg.innerHTML='<div class="warn">Chế độ Demo không đổi được mật khẩu thật. Chạy Live rồi đổi lại.</div>';return}
+  try{
+    const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'changePassword',token:SESSION.token,matKhauCu:cu,matKhauMoi:moi})});
+    const j=await res.json();
+    msg.innerHTML=j.ok?'<div class="ok">Đã đổi mật khẩu.</div>':'<div class="warn">'+(j.error||'Đổi thất bại.')+'</div>';
+  }catch(e){msg.innerHTML='<div class="warn">Không gọi được Apps Script.</div>'}
+}
+function applyRole(){
+  const loginBox=document.getElementById('loginBox'), userBar=document.getElementById('userBar'), adminBox=document.getElementById('adminBox');
+  const tabsEl=document.querySelector('.tabs'), totalEl=document.querySelector('.total');
+  if(!SESSION){
+    loginBox.style.display='block'; userBar.style.display='none'; adminBox.style.display='none';
+    tabsEl.style.display='none'; ['m1','m2','m3','m4','m5'].forEach(x=>document.getElementById(x).style.display='none'); totalEl.style.display='none';
+    document.getElementById('loginDemo').style.display=API_URL?'none':'block';
+    document.getElementById('loginLive').style.display=API_URL?'block':'none';
+    return;
+  }
+  loginBox.style.display='none'; userBar.style.display='block'; adminBox.style.display='block';
+  tabsEl.style.display='flex'; totalEl.style.display='block';
+  document.getElementById('userInfo').textContent='Đang đăng nhập: '+SESSION.ten+' — '+(SESSION.vaiTro==='ADMIN'?'Admin (toàn quyền)':('Đội: '+SESSION.doi))+(SESSION.demo?' (Demo)':' (Live)');
+  document.getElementById('t5').style.display=SESSION.vaiTro==='ADMIN'?'':'none';
+  document.getElementById('adminTitle').textContent=SESSION.vaiTro==='ADMIN'?'Tổng quan & Báo cáo — Toàn công ty':'Tổng quan đội mình';
+  // Khóa chọn Đội cho tài khoản Đội
+  doiSel.innerHTML='';
+  if(SESSION.vaiTro==='DOI'){
+    const o=document.createElement('option'); o.textContent=SESSION.doi; doiSel.appendChild(o);
+  } else {
+    for(let i=1;i<=10;i++){const o=document.createElement('option'); o.textContent='Đội '+i; doiSel.appendChild(o)}
+  }
+  doiNhom(); tab('m1'); renderAdmin();
+}
+function fmt(n){return Number(n||0).toLocaleString('vi-VN')}
+function renderAdmin(){
+  const thang=document.getElementById('bcThang').value;
+  const d=MONTHLY[thang]; if(!d){document.getElementById('bcOut').innerHTML='<div class="warn">Chưa có số tháng này.</div>';return}
+  const rows=[];
+  const teams=SESSION&&SESSION.vaiTro==='DOI'?[SESSION.doi]:['Đội 1','Đội 2'];
+  teams.forEach(t=>{const a=d[t]; rows.push([t,a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8]])});
+  if(SESSION&&SESSION.vaiTro==='ADMIN'){
+    const tot=[0,0,0,0,0,0,0,0,0];
+    ['Đội 1','Đội 2'].forEach(t=>d[t].forEach((v,i)=>tot[i]+=v));
+    rows.push(['Toàn công ty'].concat(tot));
+  }
+  let html='<table style="border-collapse:collapse;width:100%;font-size:13px"><tr><th style="text-align:left;border-bottom:1px solid #D1D5DB;padding:6px">Đơn vị</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Thường</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Đúp</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Choảng</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Đi làm</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Vắng</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Có mặt</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Thiếu</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Tuyển</th><th style="border-bottom:1px solid #D1D5DB;padding:6px">Nghỉ</th></tr>';
+  rows.forEach(r=>{html+='<tr><td style="padding:6px;font-weight:bold">'+r[0]+'</td>'+r.slice(1).map(v=>'<td style="padding:6px;text-align:right">'+fmt(v)+'</td>').join('')+'</tr>'});
+  html+='</table><p style="font-size:13px">Tháng '+thang+' — số từ Sheet cũ, đã đối chiếu. Khi chạy Live, Admin chốt tháng ở Module 5 sau khi kiểm tra.</p>';
+  document.getElementById('bcOut').innerHTML=html;
+}
+applyRole();
 </script>
 </body>
 </html>
