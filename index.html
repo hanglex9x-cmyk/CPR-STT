@@ -200,13 +200,12 @@ details summary{cursor:pointer;font-weight:bold;color:var(--green-d);padding:6px
 <div id="appScreen" style="display:none">
 <div class="layout">
 <nav id="mainNav">
-<button data-v="tongquan" class="on" onclick="showView('tongquan')">📊 Tổng quan</button>
+<button data-v="tongquan" class="on" onclick="showView('tongquan')">📊 Tổng quan &amp; Báo cáo</button>
 <button data-v="chamcong" onclick="showView('chamcong')">📝 Chấm công</button>
 <button data-v="ghinhan" onclick="showView('ghinhan')">🌿 Ghi nhận</button>
 <button data-v="loaicao" onclick="showView('loaicao')">🔁 Loại cạo</button>
 <button data-v="trangbi" onclick="showView('trangbi')">🧰 Trang bị</button>
 <button data-v="luong" id="navLuong" onclick="showView('luong')">💰 Lương (Admin)</button>
-<button data-v="baocao" onclick="showView('baocao')">📑 Báo cáo</button>
 <button class="danger" onclick="logout()">🚪 Đăng xuất</button>
 </nav>
 <main>
@@ -231,7 +230,11 @@ details summary{cursor:pointer;font-weight:bold;color:var(--green-d);padding:6px
 <div class="grid3">
 <div class="field"><label>Tháng</label><select id="tqThang" onchange="renderTongQuan()"></select></div>
 <div class="field"><label>Phạm vi</label><select id="tqDoi" onchange="renderTongQuan()"><option value="ALL">Toàn công ty</option><option value="Đội 1">Đội 1 — Srae Preah</option><option value="Đội 2">Đội 2 — Srae Chhouk</option></select></div>
-<div class="field"><label>&nbsp;</label><button class="btn-white" style="width:100%" onclick="refreshLive()">↻ Tải lại số Live</button></div>
+<div class="field"><label>Chế độ xem</label><select id="rpMode" onchange="renderReport()"><option value="thang">Cả tháng (như BCT6, B2 trống)</option><option value="ngay">1 ngày (như BCT6 khi B2 có ngày)</option></select></div>
+</div>
+<div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+<div class="field" id="rpNgayWrap" style="display:none;max-width:260px"><label>Chọn ngày (chế độ 1 ngày)</label><input type="date" id="rpNgay" value="2026-06-15" onchange="renderReport()"></div>
+<div class="field" style="flex:1;min-width:200px"><label>&nbsp;</label><button class="btn-white" style="width:100%" onclick="refreshLive()">↻ Tải lại số Live</button></div>
 </div>
 <div id="tqBadge" style="margin:6px 0"></div>
 <div id="tqKpi" style="margin-top:12px"></div>
@@ -239,6 +242,22 @@ details summary{cursor:pointer;font-weight:bold;color:var(--green-d);padding:6px
 <h3>Công Thường theo tháng (1–10/2026)</h3>
 <div id="tqTrend" class="scroll"></div>
 <div class="note" style="margin-top:12px"><b>Tháng 6/2026 là tháng đã kiểm chứng tuyệt đối theo phân tích T6:</b> Thường 15.770 • Trang bị 179 • Đi làm 15.949 • Đúp 530 • Choàng 1 • Vắng 933 • Có mặt 16.882 • Thiếu 1.808 • Tỷ lệ lao động đúng <b>90,33%</b>. Các tháng khác là số hệ thống (tổng tháng khớp với Sheet hệ thống), chưa đối chiếu chi tiết từng ô như tháng 6.</div>
+<h3>Báo cáo tình hình lao động tháng <span id="rpTitleMonth">6</span> năm 2026 (mẫu BCT6)</h3>
+<div id="rpTable" class="scroll"></div>
+<h3>Tỷ trọng loại công trong tháng đã chọn</h3>
+<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><div id="rpPie"></div><div id="rpPieLeg" style="font-size:14px"></div></div>
+<div id="rpCompareWrap"><h3>So sánh Đội 1 — Đội 2 theo tháng (công Thường, chỉ Admin)</h3><div id="rpCompare" class="scroll"></div></div>
+<h3>Chi tiết theo nhóm — tháng đã chọn</h3>
+<div id="rpGroups" class="scroll"></div>
+<h3>Chi tiết theo ngày — tháng đã chọn</h3>
+<div id="rpDaily" class="scroll"></div>
+<details><summary>Điểm chưa chắc chắn — cần hỏi khách (tóm tắt từ phân tích §8)</summary>
+<div style="font-size:14px">
+<p><b>Nhóm B — Phiên cạo &amp; chế độ D3/D4:</b> chữ phiên A/B/C/D là khu cạo? Số sau chữ (1–5) là lần cạo thứ mấy? "Chế độ D3/D4" nghĩa là gì, chữ D trong D3 có phải khu D không? Phiên có xoay vòng cố định không? 18 ô phiên trống tháng 6 bổ sung thế nào? Phiên Đúp quan hệ thế nào với phiên Thường cùng ngày?</p>
+<p><b>Nhóm C — Tuyển / Nghỉ / Thiếu / Định biên:</b> số Tuyển/Nghỉ thật tháng 6 là bao nhiêu (W/X trong Sheet là số suy ra, không dùng được)? Tab "Tuyển lao động" (đang trống) có phải nơi nhập không? Đ2-N7 = 114 người là nhóm gì? Ô Vắng để trống = 0 hay = chưa nhập? Sửa lỗi dòng 35 (ngày 31) ở BCT6 hay xóa số dòng 35?</p>
+<p><b>Nhóm D — Đối chiếu &amp; dữ liệu khác:</b> tab "Trang tính2" (khai thác 618 người / ĐB 661) là số thời điểm nào, vì sao lệch với T6 (623 người)? Thuê-Cạo và Bóc mủ tháng 6 = 0 là thật hay nhập ở chỗ khác? Chế độ cạo từng nhóm có thay đổi theo tháng không, ai cập nhật? Tháng 3/4/10 không có sản lượng thì lương tính chỉ theo công hay cách khác — file sản lượng (SL/ĐG) nằm ở đâu?</p>
+<p>Đầy đủ 22 câu hỏi: xem <b>analysis-t6.md §8</b>.</p>
+</div></details>
 </div>
 </div>
 
@@ -384,36 +403,6 @@ details summary{cursor:pointer;font-weight:bold;color:var(--green-d);padding:6px
 </div>
 
 <!-- ================= MÀN 8: BÁO CÁO ================= -->
-<div id="view-baocao" style="display:none">
-<div class="card">
-<h2 style="margin-top:0">Báo cáo — đúng mẫu BCT6 (đã sửa lỗi ngày 31 ảo)</h2>
-<div class="grid3">
-<div class="field"><label>Tháng</label><select id="rpThang" onchange="renderReport()"></select></div>
-<div class="field"><label>Phạm vi</label><select id="rpDoi" onchange="renderReport()"><option value="ALL">Toàn công ty</option><option value="Đội 1">Đội 1 — Srae Preah</option><option value="Đội 2">Đội 2 — Srae Chhouk</option></select></div>
-<div class="field"><label>Chế độ xem</label><select id="rpMode" onchange="renderReport()"><option value="thang">Cả tháng (như BCT6, B2 trống)</option><option value="ngay">1 ngày (như BCT6 khi B2 có ngày)</option></select></div>
-</div>
-<div class="field" id="rpNgayWrap" style="display:none;max-width:260px"><label>Chọn ngày (chế độ 1 ngày)</label><input type="date" id="rpNgay" value="2026-06-15" onchange="renderReport()"></div>
-<div id="rpBadge" style="margin:6px 0"></div>
-<div id="rpKpi" style="margin-top:12px"></div>
-<h3>Báo cáo tình hình lao động tháng <span id="rpTitleMonth">6</span> năm 2026 (mẫu BCT6)</h3>
-<div id="rpTable" class="scroll"></div>
-<h3>Biểu đồ xu hướng công Thường theo tháng (1–10/2026)</h3>
-<div id="rpTrend" class="scroll"></div>
-<h3>Tỷ trọng loại công trong tháng đã chọn</h3>
-<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><div id="rpPie"></div><div id="rpPieLeg" style="font-size:14px"></div></div>
-<div id="rpCompareWrap"><h3>So sánh Đội 1 — Đội 2 theo tháng (công Thường, chỉ Admin)</h3><div id="rpCompare" class="scroll"></div></div>
-<h3>Chi tiết theo nhóm — tháng đã chọn</h3>
-<div id="rpGroups" class="scroll"></div>
-<h3>Chi tiết theo ngày — tháng đã chọn</h3>
-<div id="rpDaily" class="scroll"></div>
-<details><summary>Điểm chưa chắc chắn — cần hỏi khách (tóm tắt từ phân tích §8)</summary>
-<div style="font-size:14px">
-<p><b>Nhóm B — Phiên cạo &amp; chế độ D3/D4:</b> chữ phiên A/B/C/D là khu cạo? Số sau chữ (1–5) là lần cạo thứ mấy? "Chế độ D3/D4" nghĩa là gì, chữ D trong D3 có phải khu D không? Phiên có xoay vòng cố định không? 18 ô phiên trống tháng 6 bổ sung thế nào? Phiên Đúp quan hệ thế nào với phiên Thường cùng ngày?</p>
-<p><b>Nhóm C — Tuyển / Nghỉ / Thiếu / Định biên:</b> số Tuyển/Nghỉ thật tháng 6 là bao nhiêu (W/X trong Sheet là số suy ra, không dùng được)? Tab "Tuyển lao động" (đang trống) có phải nơi nhập không? Đ2-N7 = 114 người là nhóm gì? Ô Vắng để trống = 0 hay = chưa nhập? Sửa lỗi dòng 35 (ngày 31) ở BCT6 hay xóa số dòng 35?</p>
-<p><b>Nhóm D — Đối chiếu &amp; dữ liệu khác:</b> tab "Trang tính2" (khai thác 618 người / ĐB 661) là số thời điểm nào, vì sao lệch với T6 (623 người)? Thuê-Cạo và Bóc mủ tháng 6 = 0 là thật hay nhập ở chỗ khác? Chế độ cạo từng nhóm có thay đổi theo tháng không, ai cập nhật? Tháng 3/4/10 không có sản lượng thì lương tính chỉ theo công hay cách khác — file sản lượng (SL/ĐG) nằm ở đâu?</p>
-<p>Đầy đủ 22 câu hỏi: xem <b>analysis-t6.md §8</b>.</p>
-</div></details>
-</div>
 </div>
 </main>
 </div>
@@ -623,7 +612,7 @@ function applyRole() {
     : '<div class="ok" style="font-size:13px">Bạn có thể đổi mật khẩu trong mục "Đổi mật khẩu của tôi".</div>';
   /* Khóa phạm vi theo vai trò ở mọi màn hình. */
   fillTeamSelect("ccDoi", false); fillGroupSelect("ccNhom");
-  fillTeamSelect("tqDoi", true); fillTeamSelect("rpDoi", true); fillTeamSelect("luDoi", true);
+  fillTeamSelect("tqDoi", true); fillTeamSelect("luDoi", true);
   fillTeamSelect("gnDoi", true); fillTeamSelect("tbDoi", true);
   ccOnGroupChange();
   renderGhiNhan(); renderLoaiCao(); renderTrangBi();
@@ -631,12 +620,11 @@ function applyRole() {
 }
 function showView(v) {
   if (v === "luong" && !isAdmin()) { alert("Chỉ Admin mới xem được mục Lương."); return; }
-  ["tongquan", "chamcong", "ghinhan", "loaicao", "trangbi", "luong", "baocao"].forEach(function (x) {
+  ["tongquan", "chamcong", "ghinhan", "loaicao", "trangbi", "luong"].forEach(function (x) {
     $("view-" + x).style.display = x === v ? "block" : "none";
   });
   document.querySelectorAll("#mainNav button[data-v]").forEach(function (b) { b.classList.toggle("on", b.dataset.v === v); });
   if (v === "tongquan") renderTongQuan();
-  if (v === "baocao") renderReport();
   if (v === "luong") renderLuong();
   if (v === "ghinhan") renderGhiNhan();
   if (v === "trangbi") renderTrangBi();
@@ -659,7 +647,6 @@ async function refreshLive() {
   } catch (e) { LIVE_MODE = false; }
   updateBadges();
   if ($("view-tongquan").style.display !== "none") renderTongQuan();
-  if ($("view-baocao").style.display !== "none") renderReport();
 }
 function updateBadges() {
   if ($("hdrRight")) $("hdrRight").innerHTML = (SESSION ? esc(SESSION.ten) + " — " + (isAdmin() ? "Admin (toàn quyền)" : "Đội: " + esc(SESSION.doi)) + "<br>" : "") + modeBadgeHtml();
@@ -667,9 +654,6 @@ function updateBadges() {
   if ($("tqBadge")) $("tqBadge").innerHTML = LIVE_MODE
     ? '<div class="ok" style="font-size:13px">Đang hiển thị số <b>Live</b> từ Google Sheets (tháng đã tải).</div>'
     : '<div class="note" style="font-size:13px">Đang hiển thị <b>dữ liệu mẫu</b> (số thật từ hệ thống; tháng 6/2026 đã kiểm chứng theo phân tích T6). Đăng nhập rồi bấm "Tải lại số Live" để lấy số mới nhất từ Sheet.</div>';
-  if ($("rpBadge")) $("rpBadge").innerHTML = LIVE_MODE
-    ? '<div class="ok" style="font-size:13px">Đang hiển thị số <b>Live</b> từ Google Sheets.</div>'
-    : '<div class="note" style="font-size:13px">Đang hiển thị <b>dữ liệu mẫu</b>. Tháng 6/2026 đã kiểm chứng tuyệt đối; các tháng khác là số hệ thống.</div>';
 }
 
 /* ================= MÀN 3: CHẤM CÔNG ================= */
@@ -950,6 +934,8 @@ function renderTongQuan() {
     + kpiCard(fmt(a[7]), "Thiếu V = B − U", a[7] > db * days * 0.15)
     + kpiCard(pct1(tl), "Tỷ lệ lao động")
     + kpiCard(fmt(db), "Định biên (người)")
+    + kpiCard(fmt(a[8]) + " / " + fmt(a[9]), "Tuyển / Nghỉ (suy ra)")
+    + kpiCard(fmt(phanCaoThang(thang, scope)), "Phần cạo")
     + "</div>";
   var sl = SL_MONTH[thang];
   var slT = SL_TEAM[thang + "|" + scope];
@@ -959,6 +945,7 @@ function renderTongQuan() {
   else slHtml = "<p><i>Tháng " + thang.slice(5) + "/2026 chưa có số sản lượng trong file chuẩn (tháng 3, 4, 10 không có sản lượng).</i></p>";
   $("tqSl").innerHTML = slHtml;
   $("tqTrend").innerHTML = barChart(MONTHS, MONTHS.map(function (m) { return sumMonth(m, scope)[0]; }), "#166534", "Công Thường");
+  renderReport();
 }
 
 /* ================= BIỂU ĐỒ (SVG thuần, không thư viện ngoài) ================= */
@@ -1049,7 +1036,7 @@ function rpGroupsFor(thang, scope) {
     .map(function (k) { return { key: k, doi: k.split("|")[0], nhom: k.split("|")[1], v: gm[k] }; });
 }
 function renderReport() {
-  var thang = $("rpThang").value, scope = effScope($("rpDoi").value);
+  var thang = $("tqThang").value, scope = effScope($("tqDoi").value);
   var mode = $("rpMode").value;
   $("rpNgayWrap").style.display = mode === "ngay" ? "block" : "none";
   $("rpTitleMonth").textContent = thang.slice(5);
@@ -1057,14 +1044,6 @@ function renderReport() {
   var a = sumMonth(thang, scope);
   var db = dinhBienScope(scope);
   var tl = tyLeLaoDong(thang, scope);
-  $("rpKpi").innerHTML = '<div class="kpi">'
-    + kpiCard(fmt(a[0]), "Thường") + kpiCard(fmt(a[1]), "Đúp") + kpiCard(fmt(a[4]), "Đi làm")
-    + kpiCard(fmt(a[5]), "Vắng") + kpiCard(fmt(a[6]), "Có mặt")
-    + kpiCard(fmt(a[7]), "Thiếu", true) + kpiCard(pct1(tl), "Tỷ lệ lao động (đúng)")
-    + kpiCard(fmt(db * days), "Định biên (người-ngày)")
-    + kpiCard(fmt(a[8]) + " / " + fmt(a[9]), "Tuyển / Nghỉ (suy ra)")
-    + kpiCard(fmt(phanCaoThang(thang, scope)), "Phần cạo (đúng)")
-    + "</div>";
   /* Bảng BCT6 theo nhóm. */
   var h = '<table><tr><th>Đơn vị</th><th>Định biên (người)</th><th>ĐB (người-ngày)</th><th>Chế độ</th><th>Phần cạo</th><th>Thường</th><th>Đúp</th><th>Trang bị</th><th>Đi làm</th><th>Vắng</th><th>Cộng (= Có mặt)</th><th>Thiếu</th><th>Tuyển*</th><th>Nghỉ*</th><th>Tỷ lệ LĐ</th></tr>';
   teamsInScope(scope).forEach(function (tm) {
@@ -1086,7 +1065,6 @@ function renderReport() {
   h += '<tr class="total"><td>Tổng cộng</td><td>' + fmt(db) + '</td><td>' + fmt(db * days) + '</td><td>—</td><td>' + fmt(phanCaoThang(thang, scope)) + '</td><td>' + fmt(a[0]) + '</td><td>' + fmt(a[1]) + '</td><td>' + fmt(a[3]) + '</td><td>' + fmt(a[4]) + '</td><td>' + fmt(a[5]) + '</td><td>' + fmt(a[6]) + '</td><td>' + fmt(a[7]) + '</td><td>' + fmt(a[8]) + '</td><td>' + fmt(a[9]) + '</td><td>' + pct1(tl) + '</td></tr></table>';
   $("rpTable").innerHTML = h;
   /* Biểu đồ xu hướng + tỷ trọng. */
-  $("rpTrend").innerHTML = barChart(MONTHS, MONTHS.map(function (m) { return sumMonth(m, scope)[0]; }), "#166534", "Công Thường");
   var parts = [a[0], a[1], a[2], a[3]];
   $("rpPie").innerHTML = donut(parts, ["#166534", "#ea580c", "#b91c1c", "#2563eb"], ["Thường", "Đúp", "Choàng", "Trang bị"]);
   var tot = parts.reduce(function (x, y) { return x + y; }, 0) || 1;
@@ -1155,8 +1133,8 @@ function phanCaoThang(thang, scope) {
 /* ================= KHỞI TẠO ================= */
 (function init() {
   loadSession();
-  ["tqThang", "rpThang", "luThang", "tbThang", "gnThang"].forEach(function (id) { fillMonthSelect(id, "2026-06"); });
-  fillTeamSelect("tqDoi", true); fillTeamSelect("rpDoi", true); fillTeamSelect("luDoi", true);
+  ["tqThang", "luThang", "tbThang", "gnThang"].forEach(function (id) { fillMonthSelect(id, "2026-06"); });
+  fillTeamSelect("tqDoi", true); fillTeamSelect("luDoi", true);
   fillTeamSelect("gnDoi", true); fillTeamSelect("tbDoi", true);
   fillTeamSelect("ccDoi", false); fillGroupSelect("ccNhom");
   renderTongQuan();
