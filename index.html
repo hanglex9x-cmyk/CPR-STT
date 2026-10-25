@@ -206,13 +206,20 @@ details summary{cursor:pointer;font-weight:bold;color:var(--green-d);padding:6px
 <button data-v="loaicao" onclick="showView('loaicao')">🔁 Loại cạo</button>
 <button data-v="trangbi" onclick="showView('trangbi')">🧰 Trang bị</button>
 <button data-v="luong" id="navLuong" onclick="showView('luong')">💰 Lương (Admin)</button>
+<button data-v="hethong" onclick="showView('hethong')">⚙️ Hệ thống</button>
 <button class="danger" onclick="logout()">🚪 Đăng xuất</button>
 </nav>
 <main>
 <div class="card" id="userBar">
 <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b id="userInfo"></b><span id="modeBadge"></span></div>
+</div>
+
+<!-- ================= MÀN HỆ THỐNG ================= -->
+<div id="view-hethong" style="display:none">
+<div class="card">
+<h2 style="margin-top:0">Hệ thống</h2>
 <div id="pwdBanner" style="margin-top:10px"></div>
-<details><summary>Đổi mật khẩu của tôi</summary>
+<h3>Đổi mật khẩu của tôi</h3>
 <div class="grid3" style="margin-top:8px">
 <div class="field"><label>Mật khẩu cũ</label><input id="mkCu" type="password" autocomplete="current-password"></div>
 <div class="field"><label>Mật khẩu mới (≥ 6 ký tự)</label><input id="mkMoi" type="password" autocomplete="new-password"></div>
@@ -220,7 +227,7 @@ details summary{cursor:pointer;font-weight:bold;color:var(--green-d);padding:6px
 </div>
 <button class="btn-green" onclick="doiMK()">Đổi mật khẩu</button>
 <div id="mkMsg" style="margin-top:8px"></div>
-</details>
+</div>
 </div>
 
 <!-- ================= MÀN 2: TỔNG QUAN ================= -->
@@ -608,19 +615,19 @@ function applyRole() {
   $("modeBadge").innerHTML = modeBadgeHtml();
   $("navLuong").style.display = isAdmin() ? "" : "none";
   $("pwdBanner").innerHTML = SESSION.canDoiMatKhau
-    ? '<div class="warn"><b>⚠️ Tài khoản của bạn được yêu cầu đổi mật khẩu.</b> Mở mục "Đổi mật khẩu của tôi" bên dưới và đặt mật khẩu mới.</div>'
-    : '<div class="ok" style="font-size:13px">Bạn có thể đổi mật khẩu trong mục "Đổi mật khẩu của tôi".</div>';
+    ? '<div class="warn"><b>⚠️ Tài khoản của bạn được yêu cầu đổi mật khẩu.</b> Đặt mật khẩu mới ở mục dưới đây.</div>'
+    : '<div class="ok" style="font-size:13px">Bạn có thể đổi mật khẩu ở mục dưới đây.</div>';
   /* Khóa phạm vi theo vai trò ở mọi màn hình. */
   fillTeamSelect("ccDoi", false); fillGroupSelect("ccNhom");
   fillTeamSelect("tqDoi", true); fillTeamSelect("luDoi", true);
   fillTeamSelect("gnDoi", true); fillTeamSelect("tbDoi", true);
   ccOnGroupChange();
   renderGhiNhan(); renderLoaiCao(); renderTrangBi();
-  showView("tongquan");
+  showView(SESSION.canDoiMatKhau ? "hethong" : "tongquan");
 }
 function showView(v) {
   if (v === "luong" && !isAdmin()) { alert("Chỉ Admin mới xem được mục Lương."); return; }
-  ["tongquan", "chamcong", "ghinhan", "loaicao", "trangbi", "luong"].forEach(function (x) {
+  ["tongquan", "chamcong", "ghinhan", "loaicao", "trangbi", "luong", "hethong"].forEach(function (x) {
     $("view-" + x).style.display = x === v ? "block" : "none";
   });
   document.querySelectorAll("#mainNav button[data-v]").forEach(function (b) { b.classList.toggle("on", b.dataset.v === v); });
